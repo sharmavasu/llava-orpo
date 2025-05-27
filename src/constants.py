@@ -43,8 +43,8 @@ DATASET_CONFIGS = {
 # Training configurations
 TRAINING_CONFIGS = {
     "lora": {
-        "r": 4,  # Start small for memory efficiency
-        "alpha": 8,
+        "r": 2,  # Start small for memory efficiency
+        "alpha": 4,
         "dropout": 0.05,
         "target_modules": [
             "q_proj", "k_proj", "v_proj", "o_proj",
@@ -75,7 +75,7 @@ TRAINING_HYPERPARAMS = {
     "logging_steps": 10,
     "save_steps": 250,
     "eval_steps": 250,
-    "max_length": 4096,  # Token length limit
+    "max_length": 2560,  # Token length limit
     "dataloader_num_workers": 0,  # Avoid multiprocessing issues
     "dataloader_pin_memory": False,
     "fp16": False,  # Use bf16 instead if supported

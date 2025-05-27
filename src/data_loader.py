@@ -1770,16 +1770,70 @@ class RLAIFVDataLoader:
         
         return True
     
+    # def format_sample_for_training(self, sample: Dict) -> Dict:
+    #     """
+    #     Format a single sample for ORPO training - IMMEDIATE FIX VERSION
+    #     Uses higher max_length to avoid truncating image tokens
+        
+    #     Args:
+    #         sample: Raw sample from dataset
+            
+    #     Returns:
+    #         Formatted sample ready for training
+    #     """
+    #     if not self.processor:
+    #         raise ValueError("Processor must be provided for formatting")
+        
+    #     try:
+    #         question = sample["question"]
+            
+    #         # WORKING SOLUTION: Manual <image> token with higher max_length
+    #         text_with_image = f"<image>\n{question}"
+            
+    #         inputs = self.processor(
+    #             text=text_with_image,
+    #             images=sample["image"],
+    #             return_tensors="pt",
+    #             padding=False,
+    #             truncation=True,
+    #             max_length=4096  # INCREASED: Much higher to accommodate all image tokens
+    #         )
+            
+    #         # Check if sequence is still too long after processing
+    #         seq_length = inputs["input_ids"].shape[1]
+    #         if seq_length > 4000:  # Safety check
+    #             logger.warning(f"Very long sequence: {seq_length} tokens")
+            
+    #         # Format for ORPO training
+    #         formatted_sample = {
+    #             # Model inputs
+    #             "input_ids": inputs["input_ids"].squeeze(0),
+    #             "attention_mask": inputs["attention_mask"].squeeze(0),
+    #             "pixel_values": inputs["pixel_values"].squeeze(0),
+                
+    #             # ORPO targets
+    #             "chosen": sample["chosen"],
+    #             "rejected": sample["rejected"],
+                
+    #             # Metadata for analysis
+    #             "question": question,
+    #             "ds_name": sample.get("ds_name", "unknown"),
+    #             "origin_dataset": sample.get("origin_dataset", "unknown")
+    #         }
+            
+    #         logger.debug(f"Formatted sample with {seq_length} tokens")
+    #         return formatted_sample
+            
+    #     except Exception as e:
+    #         # Log the specific error for debugging
+    #         logger.error(f"Error formatting sample: {e}")
+    #         logger.error(f"Sample keys: {list(sample.keys())}")
+    #         logger.error(f"Question: {sample.get('question', 'N/A')[:100]}...")
+    #         raise
+    
     def format_sample_for_training(self, sample: Dict) -> Dict:
         """
-        Format a single sample for ORPO training - IMMEDIATE FIX VERSION
-        Uses higher max_length to avoid truncating image tokens
-        
-        Args:
-            sample: Raw sample from dataset
-            
-        Returns:
-            Formatted sample ready for training
+        Format a single sample for ORPO training - FIXED with image_sizes
         """
         if not self.processor:
             raise ValueError("Processor must be provided for formatting")
@@ -1787,7 +1841,7 @@ class RLAIFVDataLoader:
         try:
             question = sample["question"]
             
-            # WORKING SOLUTION: Manual <image> token with higher max_length
+            # WORKING SOLUTION: Manual <image> token
             text_with_image = f"<image>\n{question}"
             
             inputs = self.processor(
@@ -1796,20 +1850,21 @@ class RLAIFVDataLoader:
                 return_tensors="pt",
                 padding=False,
                 truncation=True,
-                max_length=4096  # INCREASED: Much higher to accommodate all image tokens
+                max_length=2560
             )
             
-            # Check if sequence is still too long after processing
+            # Check if sequence is too long
             seq_length = inputs["input_ids"].shape[1]
-            if seq_length > 4000:  # Safety check
+            if seq_length > 4000:
                 logger.warning(f"Very long sequence: {seq_length} tokens")
             
-            # Format for ORPO training
+            # CRITICAL FIX: Include image_sizes that LLaVA needs
             formatted_sample = {
                 # Model inputs
                 "input_ids": inputs["input_ids"].squeeze(0),
                 "attention_mask": inputs["attention_mask"].squeeze(0),
                 "pixel_values": inputs["pixel_values"].squeeze(0),
+                "image_sizes": inputs["image_sizes"].squeeze(0),  # ← ADDED: Required by LLaVA
                 
                 # ORPO targets
                 "chosen": sample["chosen"],
@@ -1825,7 +1880,6 @@ class RLAIFVDataLoader:
             return formatted_sample
             
         except Exception as e:
-            # Log the specific error for debugging
             logger.error(f"Error formatting sample: {e}")
             logger.error(f"Sample keys: {list(sample.keys())}")
             logger.error(f"Question: {sample.get('question', 'N/A')[:100]}...")

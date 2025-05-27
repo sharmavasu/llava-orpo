@@ -1,0 +1,14 @@
+accelerate==1.7.0
+bitsandbytes==0.45.5
+datasets==3.6.0
+numpy==1.26.4
+peft==0.15.2
+protobuf==6.31.0
+scikit-learn==1.2.2
+sentencepiece==0.1.99
+torch==2.1.2
+torchaudio==2.3.0+cu121
+torchvision==0.16.2
+tqdm==4.67.1
+transformers==4.52.3
+wandb==0.19.11

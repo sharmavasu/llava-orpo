@@ -164,7 +164,7 @@ def create_training_arguments(args):
         remove_unused_columns=TRAINING_HYPERPARAMS["remove_unused_columns"],
         
         # Evaluation
-        evaluation_strategy="steps",
+        eval_strategy="steps",
         eval_steps=TRAINING_HYPERPARAMS["eval_steps"],
         load_best_model_at_end=OUTPUT_CONFIGS["load_best_model_at_end"],
         metric_for_best_model=OUTPUT_CONFIGS["metric_for_best_model"],
