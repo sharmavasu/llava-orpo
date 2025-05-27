@@ -172,9 +172,7 @@ The project is organized as follows:
 - [Discuss what the results imply about the effectiveness of ORPO on LLaVA for this dataset]
 - [Impact of QLoRA or other fine-tuning choices]
 
-## Bonus: Deployment & Advanced Quantization
-*(This section to be filled if these bonus tasks are attempted)*
-
+## Deployment & Advanced Quantization
 - **Gradio Demo:** [Link or instructions if a demo is created]
 - **Advanced Quantization (AWQ, GPTQ, etc.):** [Details on methods used and results if implemented]
 
