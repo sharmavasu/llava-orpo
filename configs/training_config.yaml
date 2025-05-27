@@ -1,0 +1,164 @@
+# configs/training_config.yaml
+# Configuration file for LLaVA-ORPO training
+
+# Model Configuration
+model:
+  model_id: "llava-hf/llava-v1.6-mistral-7b-hf"
+  model_name: "llava-1.6-mistral-7b"
+  torch_dtype: "auto"  # Will be determined based on hardware
+
+# LoRA Configuration
+lora:
+  r: 4                    # LoRA rank (start small for memory efficiency)
+  alpha: 8                # LoRA alpha (typically 2x rank)
+  dropout: 0.05           # LoRA dropout
+  target_modules:         # Modules to apply LoRA to
+    - "q_proj"
+    - "k_proj" 
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+# ORPO Configuration
+orpo:
+  beta: 0.1               # Regularization strength
+  alpha: 1.0              # Preference loss weight
+  reference_free: true    # ORPO doesn't need reference model
+
+# Dataset Configuration
+dataset:
+  dataset_id: "openbmb/RLAIF-V-Dataset"
+  streaming: true         # Use streaming for memory efficiency
+  max_samples_train: null # null = use all data
+  max_samples_eval: 500   # Limit eval set for faster evaluation
+  train_ratio: 0.8
+  val_ratio: 0.15
+  test_ratio: 0.05
+  image_size: [336, 336]  # Standard LLaVA input size
+  max_length: 512         # Maximum token length
+
+# Training Hyperparameters
+training:
+  # Basic settings
+  learning_rate: 5.0e-6   # Conservative for vision-language models
+  batch_size: 1           # Small batch size for memory constraints
+  gradient_accumulation_steps: 8  # Effective batch size = 8
+  max_steps: 1000         # Start with fewer steps for testing
+  
+  # Schedule
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  weight_decay: 0.01
+  
+  # Precision
+  fp16: false
+  bf16: true              # Use bf16 if supported
+  
+  # Memory optimization
+  gradient_checkpointing: true
+  dataloader_num_workers: 0
+  dataloader_pin_memory: false
+  remove_unused_columns: false
+  
+  # Evaluation
+  evaluation_strategy: "steps"
+  eval_steps: 250
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_preference_accuracy"
+  greater_is_better: true
+  
+  # Checkpointing
+  save_strategy: "steps"
+  save_steps: 250
+  save_total_limit: 3
+  
+  # Logging
+  logging_strategy: "steps"
+  logging_steps: 10
+
+# Memory Management
+memory:
+  use_cpu_offload: true
+  max_memory_gb: 5.5      # Conservative for 6GB GPU
+  clear_cache_steps: 50   # Clear cache every N steps
+  pytorch_cuda_alloc_conf: "max_split_size_mb:128"
+
+# Output Configuration
+output:
+  output_dir: "./outputs/checkpoints"
+  logging_dir: "./outputs/logs"
+  final_model_dir: "./outputs/final_model"
+
+# Weights & Biases Configuration
+wandb:
+  project: "llava-orpo-training"
+  entity: null            # Set to your wandb username
+  tags:
+    - "llava"
+    - "orpo"
+    - "vision-language"
+    - "preference-learning"
+    - "qlora"
+  notes: "LLaVA-1.6 fine-tuning with ORPO on RLAIF-V dataset using QLoRA"
+
+# Evaluation Configuration
+evaluation:
+  num_eval_samples: 100
+  generation_config:
+    max_new_tokens: 100
+    temperature: 0.7
+    do_sample: true
+    top_p: 0.9
+    repetition_penalty: 1.1
+
+# System Configuration
+system:
+  seed: 42
+  device_map: "auto"
+  low_cpu_mem_usage: true
+  
+# Validation Configuration
+validation:
+  validate_data_format: true
+  min_response_length: 10
+  max_response_length: 1000
+  skip_invalid_samples: true
+  log_invalid_samples: true
+
+# Experiment Variants (for easy switching)
+experiments:
+  # Quick test run
+  quick_test:
+    training:
+      max_steps: 100
+      eval_steps: 50
+      save_steps: 50
+    dataset:
+      max_samples_train: 100
+      max_samples_eval: 20
+    
+  # Memory-constrained setup
+  low_memory:
+    lora:
+      r: 2
+      alpha: 4
+    training:
+      batch_size: 1
+      gradient_accumulation_steps: 4
+    memory:
+      max_memory_gb: 4.0
+      clear_cache_steps: 25
+    
+  # Higher performance setup
+  high_performance:
+    lora:
+      r: 8
+      alpha: 16
+    training:
+      batch_size: 2
+      gradient_accumulation_steps: 4
+      max_steps: 2000
+    memory:
+      max_memory_gb: 8.0
